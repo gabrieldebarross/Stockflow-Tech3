@@ -8,7 +8,7 @@ try {
 
     $dados = json_decode(file_get_contents("php://input"), true);
 
-    $id = (int) ($dados["id_categoria"] ?? 0);
+    $id = (int) ($dados["id_produto"] ?? 0);
 
     if ($id <= 0) {
 
@@ -16,7 +16,7 @@ try {
 
         echo json_encode([
             "sucesso" => false,
-            "mensagem" => "ID da categoria inválido."
+            "mensagem" => "ID do produto inválido."
         ]);
 
         exit;
@@ -24,8 +24,8 @@ try {
 
     $stmt = $conn->prepare(
         "SELECT COUNT(*) AS total
-         FROM produto
-         WHERE id_categoria = ?"
+         FROM venda
+         WHERE id_produto = ?"
     );
 
     $stmt->bind_param("i", $id);
@@ -36,20 +36,21 @@ try {
 
     if ((int) $row["total"] > 0) {
 
+        $stmt->close();
+
         echo json_encode([
             "sucesso" => false,
-            "mensagem" => "Não é possível excluir esta categoria porque existem produtos vinculados."
+            "mensagem" => "Não é possível excluir este produto porque existem vendas vinculadas."
         ]);
 
-        $stmt->close();
         exit;
     }
 
     $stmt->close();
 
     $stmt = $conn->prepare(
-        "DELETE FROM categoria
-         WHERE id_categoria = ?"
+        "DELETE FROM produto
+         WHERE id_produto = ?"
     );
 
     $stmt->bind_param("i", $id);
@@ -57,18 +58,19 @@ try {
 
     if ($stmt->affected_rows === 0) {
 
+        $stmt->close();
+
         echo json_encode([
             "sucesso" => false,
-            "mensagem" => "Categoria não encontrada."
+            "mensagem" => "Produto não encontrado."
         ]);
 
-        $stmt->close();
         exit;
     }
 
     echo json_encode([
         "sucesso" => true,
-        "mensagem" => "Categoria excluída com sucesso."
+        "mensagem" => "Produto excluído com sucesso."
     ]);
 
     $stmt->close();
@@ -79,6 +81,6 @@ try {
 
     echo json_encode([
         "sucesso" => false,
-        "mensagem" => "Erro ao excluir categoria."
+        "mensagem" => "Erro ao excluir produto."
     ]);
 }
