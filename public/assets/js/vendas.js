@@ -15,6 +15,7 @@ const mensagem = document.getElementById("mensagem");
 let pagina = 1;
 let totalVendasPagina = 0;
 let produtos = [];
+
 async function carregarProdutos() {
     try {
         const resposta = await fetch("../api/produtos/listar.php");
@@ -39,13 +40,13 @@ async function carregarProdutos() {
         produtos
             .filter((item) => item.estoque > 0)
             .map((item) => {
-            const option = document.createElement("option");
-            option.value =
-                item.id_produto.toString();
-            option.textContent =
-                `${item.nome} - Estoque: ${item.estoque}`;
-            produto.appendChild(option);
-        });
+                const option = document.createElement("option");
+                option.value =
+                    item.id_produto.toString();
+                option.textContent =
+                    `${item.nome} - Estoque: ${item.estoque}`;
+                produto.appendChild(option);
+            });
     }
     catch (erro) {
         console.error(erro);
@@ -163,6 +164,7 @@ async function listarVendas() {
         mostrarMensagem("Não foi possível carregar as vendas.", "danger");
     }
 }
+
 async function salvarVenda() {
     if (!idVenda ||
         !produto ||
@@ -175,6 +177,7 @@ async function salvarVenda() {
     const idProduto = Number(produto.value);
     const quantidadeValor = Number(quantidade.value);
     const valor = Number(valorUnitario.value);
+
     if (Number.isNaN(idProduto) ||
         idProduto <= 0) {
         mostrarMensagem("Selecione um produto.", "warning");
@@ -190,7 +193,9 @@ async function salvarVenda() {
         mostrarMensagem("Informe um valor unitário válido.", "warning");
         return;
     }
+
     const produtoSelecionado = produtos.find((item) => item.id_produto === idProduto);
+
     if (!produtoSelecionado) {
         mostrarMensagem("Produto não encontrado.", "danger");
         return;
@@ -244,6 +249,7 @@ async function salvarVenda() {
         mostrarMensagem("Erro ao salvar a venda.", "danger");
     }
 }
+
 function abrirEdicao(venda) {
     if (!idVenda ||
         !produto ||
@@ -273,6 +279,7 @@ function abrirEdicao(venda) {
         modal.show();
     }
 }
+
 async function excluirVenda(id) {
     const confirmar = confirm("Tem certeza que deseja excluir esta venda?");
     if (!confirmar) {
@@ -305,6 +312,7 @@ async function excluirVenda(id) {
         mostrarMensagem("Erro ao excluir a venda.", "danger");
     }
 }
+
 function atualizarEstoqueDisponivel() {
     if (!produto ||
         !estoqueDisponivel) {
@@ -320,6 +328,7 @@ function atualizarEstoqueDisponivel() {
     estoqueDisponivel.textContent =
         `Estoque disponível: ${produtoSelecionado.estoque}`;
 }
+
 function limparFormulario() {
     if (!idVenda ||
         !produto ||
@@ -339,6 +348,7 @@ function limparFormulario() {
             "Selecione um produto para consultar o estoque.";
     }
 }
+
 function fecharModal() {
     const modalElement = document.getElementById("modalVenda");
     if (!modalElement) {
@@ -347,12 +357,14 @@ function fecharModal() {
     const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
     modal.hide();
 }
+
 function formatarMoeda(valor) {
     return valor.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
 }
+
 function formatarData(data) {
     const dataObj = new Date(data.replace(" ", "T"));
     if (Number.isNaN(dataObj.getTime())) {
@@ -360,6 +372,7 @@ function formatarData(data) {
     }
     return dataObj.toLocaleString("pt-BR");
 }
+
 function atualizarPaginacao() {
     if (paginaAtual) {
         paginaAtual.textContent =
@@ -374,6 +387,7 @@ function atualizarPaginacao() {
             totalVendasPagina === 0;
     }
 }
+
 function mostrarMensagem(texto, tipo) {
     if (!mensagem) {
         return;
@@ -395,6 +409,7 @@ function mostrarMensagem(texto, tipo) {
         </div>
     `;
 }
+
 if (formVenda) {
     formVenda.addEventListener("submit", async (evento) => {
         evento.preventDefault();
@@ -422,7 +437,7 @@ if (quantidade) {
         if (produtoSelecionado &&
             !Number.isNaN(quantidadeValor) &&
             quantidadeValor >
-                produtoSelecionado.estoque) {
+            produtoSelecionado.estoque) {
             estoqueDisponivel?.classList.add("text-danger");
             if (estoqueDisponivel) {
                 estoqueDisponivel.textContent =
@@ -476,4 +491,4 @@ async function inicializar() {
     await listarVendas();
 }
 inicializar();
-export {};
+export { };

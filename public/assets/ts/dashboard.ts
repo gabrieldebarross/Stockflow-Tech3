@@ -1,39 +1,45 @@
-interface Indicadores {
-    total_vendas: string;
-    faturamento_total: string;
+interface VendaDashboard {
+    id_venda: number;
+    data_venda: string;
+    id_produto: number;
+    produto: string;
+    categoria: string;
+    quantidade: number;
+    valor_unitario: number;
+    total: number;
 }
 
-interface TotalProdutos {
-    total_produtos: string;
-}
-
-interface EstoqueCriticoQuantidade {
-    produtos_estoque_critico: string;
-}
-
-interface IndicadoresResponse {
+interface RespostaVendas {
     sucesso: boolean;
-    dados?: [
-        Indicadores,
-        TotalProdutos,
-        EstoqueCriticoQuantidade
-    ];
+    dados: VendaDashboard[];
+    mensagem?: string;
+}
+
+interface Produto {
+    id_produto: number;
+    nome: string;
+    preco: number;
+    estoque: number;
+    estoque_minimo: number;
+    id_categoria: number;
+    categoria: string;
+}
+
+interface RespostaProdutos {
+    sucesso: boolean;
+    dados: Produto[];
     mensagem?: string;
 }
 
 interface RankingProduto {
+    posicao: number;
     produto: string;
-    quantidade_vendida: string;
-    faturamento: string;
+    quantidade: number;
+    faturamento: number;
+    faturamentoFormatado: string;
 }
 
-interface RankingResponse {
-    sucesso: boolean;
-    dados?: RankingProduto[];
-    mensagem?: string;
-}
-
-interface EstoqueCritico {
+interface ProdutoEstoqueCritico {
     id_produto: number;
     nome: string;
     categoria: string;
@@ -41,495 +47,20 @@ interface EstoqueCritico {
     estoque_minimo: number;
 }
 
-interface EstoqueCriticoResponse {
+interface RespostaEstoqueCritico {
     sucesso: boolean;
-    dados?: EstoqueCritico[];
+    dados: ProdutoEstoqueCritico[];
     mensagem?: string;
 }
 
 
-const totalVendas =
-    document.getElementById("totalVendas");
-
-const faturamento =
-    document.getElementById("faturamento");
-
-const totalProdutos =
-    document.getElementById("totalProdutos");
-
-const estoqueCritico =
-    document.getElementById("estoqueCritico");
-
-const tabelaRanking =
-    document.getElementById("tabelaRanking");
-
-const tabelaEstoqueCritico =
-    document.getElementById(
-        "tabelaEstoqueCritico"
-    );
-
-const mensagem =
-    document.getElementById("mensagem");
-
-
-async function carregarIndicadores(): Promise<void> {
-
-    try {
-
-        const resposta =
-            await fetch(
-                "../api/dashboard/indicadores.php"
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro ao consultar os indicadores."
-            );
-        }
-
-
-        const dados: IndicadoresResponse =
-            await resposta.json();
-
-
-        if (
-            !dados.sucesso ||
-            !dados.dados
-        ) {
-
-            throw new Error(
-                dados.mensagem ??
-                "Não foi possível carregar os indicadores."
-            );
-        }
-
-
-        const indicadores =
-            dados.dados[0];
-
-        const produtos =
-            dados.dados[1];
-
-        const estoque =
-            dados.dados[2];
-
-
-        if (
-            !totalVendas ||
-            !faturamento ||
-            !totalProdutos ||
-            !estoqueCritico
-        ) {
-
-            throw new Error(
-                "Elementos da dashboard não encontrados."
-            );
-        }
-
-
-        totalVendas.textContent =
-            indicadores.total_vendas;
-
-
-        const valorFaturamento =
-            Number(
-                indicadores.faturamento_total
-            );
-
-
-        faturamento.textContent =
-            Number.isNaN(valorFaturamento)
-                ? "R$ 0,00"
-                : formatarMoeda(
-                    valorFaturamento
-                );
-
-
-        totalProdutos.textContent =
-            produtos.total_produtos;
-
-
-        estoqueCritico.textContent =
-            estoque.produtos_estoque_critico;
-
-
-    } catch (erro) {
-
-        console.error(erro);
-
-        mostrarMensagem(
-            "Não foi possível carregar os indicadores.",
-            "danger"
-        );
-    }
-}
-
-
-async function carregarRanking(): Promise<void> {
-
-    try {
-
-        const resposta =
-            await fetch(
-                "../api/dashboard/ranking.php"
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro ao consultar o ranking."
-            );
-        }
-
-
-        const dados: RankingResponse =
-            await resposta.json();
-
-
-        if (
-            !dados.sucesso ||
-            !dados.dados
-        ) {
-
-            throw new Error(
-                dados.mensagem ??
-                "Não foi possível carregar o ranking."
-            );
-        }
-
-
-        if (!tabelaRanking) {
-
-            throw new Error(
-                "Tabela de ranking não encontrada."
-            );
-        }
-
-
-        tabelaRanking.innerHTML = "";
-
-
-        if (dados.dados.length === 0) {
-
-            tabelaRanking.innerHTML = `
-                <tr>
-                    <td
-                        colspan="4"
-                        class="text-center text-muted"
-                    >
-                        Nenhuma venda registrada.
-                    </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        /*
-         * MAP
-         * Transforma os dados recebidos da API
-         * antes de apresentar no DOM.
-         */
-
-        const ranking =
-            dados.dados.map(
-                (item, index) => {
-
-                    return {
-                        posicao: index + 1,
-                        produto: item.produto,
-                        quantidade:
-                            Number(
-                                item.quantidade_vendida
-                            ),
-                        faturamento:
-                            Number(
-                                item.faturamento
-                            )
-                    };
-                }
-            );
-
-
-        /*
-         * REDUCE
-         * Calcula o faturamento total
-         * dos produtos apresentados.
-         */
-
-        const faturamentoPagina =
-            ranking.reduce(
-                (
-                    total,
-                    item
-                ) =>
-                    total +
-                    (
-                        Number.isNaN(
-                            item.faturamento
-                        )
-                            ? 0
-                            : item.faturamento
-                    ),
-                0
-            );
-
-
-        console.log(
-            "Faturamento do ranking:",
-            faturamentoPagina
-        );
-
-
-        ranking.forEach(
-            (item) => {
-
-                const tr =
-                    document.createElement("tr");
-
-
-                const tdPosicao =
-                    document.createElement("td");
-
-                tdPosicao.textContent =
-                    item.posicao.toString();
-
-
-                const tdProduto =
-                    document.createElement("td");
-
-                tdProduto.textContent =
-                    item.produto;
-
-
-                const tdQuantidade =
-                    document.createElement("td");
-
-                tdQuantidade.textContent =
-                    Number.isNaN(
-                        item.quantidade
-                    )
-                        ? "0"
-                        : item.quantidade.toString();
-
-
-                const tdFaturamento =
-                    document.createElement("td");
-
-                tdFaturamento.textContent =
-                    Number.isNaN(
-                        item.faturamento
-                    )
-                        ? "R$ 0,00"
-                        : formatarMoeda(
-                            item.faturamento
-                        );
-
-
-                tr.appendChild(tdPosicao);
-                tr.appendChild(tdProduto);
-                tr.appendChild(tdQuantidade);
-                tr.appendChild(tdFaturamento);
-
-
-                tabelaRanking.appendChild(tr);
-            }
-        );
-
-
-    } catch (erro) {
-
-        console.error(erro);
-
-        if (tabelaRanking) {
-
-            tabelaRanking.innerHTML = `
-                <tr>
-                    <td
-                        colspan="4"
-                        class="text-center text-danger"
-                    >
-                        Erro ao carregar o ranking.
-                    </td>
-                </tr>
-            `;
-        }
-    }
-}
-
-
-async function carregarEstoqueCritico(): Promise<void> {
-
-    try {
-
-        const resposta =
-            await fetch(
-                "../api/dashboard/estoque-critico.php"
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro ao consultar estoque crítico."
-            );
-        }
-
-
-        const dados: EstoqueCriticoResponse =
-            await resposta.json();
-
-
-        if (
-            !dados.sucesso ||
-            !dados.dados
-        ) {
-
-            throw new Error(
-                dados.mensagem ??
-                "Não foi possível carregar o estoque crítico."
-            );
-        }
-
-
-        if (!tabelaEstoqueCritico) {
-
-            throw new Error(
-                "Tabela de estoque crítico não encontrada."
-            );
-        }
-
-
-        tabelaEstoqueCritico.innerHTML = "";
-
-
-        if (dados.dados.length === 0) {
-
-            tabelaEstoqueCritico.innerHTML = `
-                <tr>
-                    <td
-                        colspan="5"
-                        class="text-center text-success"
-                    >
-                        Nenhum produto em estoque crítico.
-                    </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        /*
-         * FILTER
-         * Mantém somente produtos realmente
-         * dentro da condição de estoque crítico.
-         */
-
-        const produtosCriticos =
-            dados.dados.filter(
-                (item) =>
-                    item.estoque <=
-                    item.estoque_minimo
-            );
-
-
-        produtosCriticos.forEach(
-            (item) => {
-
-                const tr =
-                    document.createElement("tr");
-
-
-                const tdNome =
-                    document.createElement("td");
-
-                tdNome.textContent =
-                    item.nome;
-
-
-                const tdCategoria =
-                    document.createElement("td");
-
-                tdCategoria.textContent =
-                    item.categoria;
-
-
-                const tdEstoque =
-                    document.createElement("td");
-
-                tdEstoque.textContent =
-                    item.estoque.toString();
-
-
-                const tdMinimo =
-                    document.createElement("td");
-
-                tdMinimo.textContent =
-                    item.estoque_minimo.toString();
-
-
-                const tdStatus =
-                    document.createElement("td");
-
-
-                const badge =
-                    document.createElement("span");
-
-                badge.className =
-                    "badge text-bg-danger";
-
-                badge.textContent =
-                    "Reposição necessária";
-
-
-                tdStatus.appendChild(
-                    badge
-                );
-
-
-                tr.appendChild(tdNome);
-                tr.appendChild(tdCategoria);
-                tr.appendChild(tdEstoque);
-                tr.appendChild(tdMinimo);
-                tr.appendChild(tdStatus);
-
-
-                tabelaEstoqueCritico.appendChild(
-                    tr
-                );
-            }
-        );
-
-
-    } catch (erro) {
-
-        console.error(erro);
-
-        if (tabelaEstoqueCritico) {
-
-            tabelaEstoqueCritico.innerHTML = `
-                <tr>
-                    <td
-                        colspan="5"
-                        class="text-center text-danger"
-                    >
-                        Erro ao carregar o estoque crítico.
-                    </td>
-                </tr>
-            `;
-        }
-    }
-}
-
-
-function formatarMoeda(
+const formatarMoeda = (
     valor: number
-): string {
+): string => {
+
+    if (Number.isNaN(valor)) {
+        return "R$ 0,00";
+    }
 
     return valor.toLocaleString(
         "pt-BR",
@@ -538,48 +69,572 @@ function formatarMoeda(
             currency: "BRL"
         }
     );
-}
+};
 
 
-function mostrarMensagem(
-    texto: string,
-    tipo: "success" | "danger" | "warning"
-): void {
+const mostrarMensagem = (
+    elemento: HTMLElement,
+    mensagem: string,
+    colspan: number
+): void => {
 
-    if (!mensagem) {
-        return;
-    }
+    elemento.innerHTML = "";
 
+    const linha = document.createElement("tr");
 
-    mensagem.innerHTML = `
-        <div
-            class="alert alert-${tipo} alert-dismissible fade show"
-            role="alert"
-        >
-            ${texto}
+    const coluna = document.createElement("td");
 
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-                aria-label="Fechar"
-            ></button>
-        </div>
-    `;
-}
+    coluna.colSpan = colspan;
+
+    coluna.className =
+        "text-center text-muted";
+
+    coluna.textContent = mensagem;
+
+    linha.appendChild(coluna);
+
+    elemento.appendChild(linha);
+};
 
 
-async function inicializar(): Promise<void> {
+const carregarVendasDashboard =
+    async (): Promise<VendaDashboard[]> => {
 
-    await Promise.all([
-        carregarIndicadores(),
-        carregarRanking(),
-        carregarEstoqueCritico()
-    ]);
-}
+        try {
+
+            const resposta =
+                await fetch(
+                    "../api/dashboard/vendas.php"
+                );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    "Erro HTTP ao buscar vendas."
+                );
+            }
+
+            const dados: RespostaVendas =
+                await resposta.json();
+
+            if (!dados.sucesso) {
+                throw new Error(
+                    dados.mensagem ??
+                    "Erro ao buscar vendas."
+                );
+            }
+
+            return dados.dados;
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao carregar vendas:",
+                erro
+            );
+
+            return [];
+        }
+    };
 
 
-inicializar();
+const carregarProdutos =
+    async (): Promise<Produto[]> => {
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "../api/produtos/listar.php"
+                );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    "Erro HTTP ao buscar produtos."
+                );
+            }
+
+            const dados: RespostaProdutos =
+                await resposta.json();
+
+            if (!dados.sucesso) {
+                throw new Error(
+                    dados.mensagem ??
+                    "Erro ao buscar produtos."
+                );
+            }
+
+            return dados.dados;
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao carregar produtos:",
+                erro
+            );
+
+            return [];
+        }
+    };
+
+
+const carregarEstoqueCritico =
+    async (): Promise<void> => {
+
+        const tabela =
+            document.getElementById(
+                "tabelaEstoqueCritico"
+            );
+
+        const indicador =
+            document.getElementById(
+                "estoqueCritico"
+            );
+
+        if (
+            tabela === null ||
+            indicador === null
+        ) {
+            return;
+        }
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "../api/dashboard/estoque-critico.php"
+                );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    "Erro HTTP ao buscar estoque crítico."
+                );
+            }
+
+            const dados:
+                RespostaEstoqueCritico =
+                await resposta.json();
+
+            if (!dados.sucesso) {
+                throw new Error(
+                    dados.mensagem ??
+                    "Erro ao buscar estoque crítico."
+                );
+            }
+
+            const produtosCriticos =
+                dados.dados.filter(
+                    (produto) =>
+                        produto.estoque <=
+                        produto.estoque_minimo
+                );
+
+
+            indicador.textContent =
+                String(produtosCriticos.length);
+
+
+            if (produtosCriticos.length === 0) {
+
+                mostrarMensagem(
+                    tabela,
+                    "Nenhum produto com estoque crítico.",
+                    3
+                );
+
+                return;
+            }
+
+
+            tabela.innerHTML = "";
+
+
+            produtosCriticos.forEach(
+                (produto) => {
+
+                    const linha =
+                        document.createElement("tr");
+
+                    const colunaNome =
+                        document.createElement("td");
+
+                    const colunaEstoque =
+                        document.createElement("td");
+
+                    const colunaMinimo =
+                        document.createElement("td");
+
+
+                    colunaNome.textContent =
+                        produto.nome;
+
+                    colunaEstoque.textContent =
+                        String(produto.estoque);
+
+                    colunaMinimo.textContent =
+                        String(produto.estoque_minimo);
+
+
+                    linha.appendChild(
+                        colunaNome
+                    );
+
+                    linha.appendChild(
+                        colunaEstoque
+                    );
+
+                    linha.appendChild(
+                        colunaMinimo
+                    );
+
+                    tabela.appendChild(linha);
+                }
+            );
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao carregar estoque crítico:",
+                erro
+            );
+
+            indicador.textContent = "0";
+
+            mostrarMensagem(
+                tabela,
+                "Não foi possível carregar o estoque.",
+                3
+            );
+        }
+    };
+
+
+const processarDashboard =
+    (vendas: VendaDashboard[]): void => {
+
+        const totalVendas =
+            document.getElementById(
+                "totalVendas"
+            );
+
+        const faturamentoTotal =
+            document.getElementById(
+                "faturamentoTotal"
+            );
+
+        const produtoMaisVendido =
+            document.getElementById(
+                "produtoMaisVendido"
+            );
+
+        const quantidadeMaisVendida =
+            document.getElementById(
+                "quantidadeMaisVendida"
+            );
+
+        const tabelaRanking =
+            document.getElementById(
+                "tabelaRanking"
+            );
+
+        if (
+            totalVendas === null ||
+            faturamentoTotal === null ||
+            produtoMaisVendido === null ||
+            quantidadeMaisVendida === null ||
+            tabelaRanking === null
+        ) {
+            return;
+        }
+
+        if (vendas.length === 0) {
+
+            totalVendas.textContent = "0";
+
+            faturamentoTotal.textContent =
+                "R$ 0,00";
+
+            produtoMaisVendido.textContent =
+                "Nenhum dado registrado";
+
+            quantidadeMaisVendida.textContent =
+                "-";
+
+            mostrarMensagem(
+                tabelaRanking,
+                "Nenhuma venda registrada.",
+                4
+            );
+
+            return;
+        }
+
+        totalVendas.textContent =
+            String(vendas.length);
+
+        const faturamentoTotalCalculado =
+            vendas.reduce(
+                (
+                    acumulador: number,
+                    venda: VendaDashboard
+                ): number => {
+
+                    const quantidade =
+                        Number(venda.quantidade);
+
+                    const valorUnitario =
+                        Number(venda.valor_unitario);
+
+
+                    if (
+                        Number.isNaN(quantidade) ||
+                        Number.isNaN(valorUnitario)
+                    ) {
+                        return acumulador;
+                    }
+
+
+                    return acumulador +
+                        (
+                            quantidade *
+                            valorUnitario
+                        );
+                },
+                0
+            );
+
+
+        faturamentoTotal.textContent =
+            formatarMoeda(
+                faturamentoTotalCalculado
+            );
+
+        const rankingPorProduto =
+            vendas.reduce(
+                (
+                    resultado:
+                        Record<string, number>,
+                    venda: VendaDashboard
+                ): Record<string, number> => {
+
+                    const produto =
+                        venda.produto;
+
+                    const quantidade =
+                        Number(venda.quantidade);
+
+
+                    if (
+                        produto.trim() === "" ||
+                        Number.isNaN(quantidade)
+                    ) {
+                        return resultado;
+                    }
+
+
+                    resultado[produto] =
+                        (
+                            resultado[produto] ?? 0
+                        ) + quantidade;
+
+
+                    return resultado;
+                },
+                {} as Record<string, number>
+            );
+
+        const faturamentoPorProduto =
+            vendas.reduce(
+                (
+                    resultado:
+                        Record<string, number>,
+                    venda: VendaDashboard
+                ): Record<string, number> => {
+
+                    const produto =
+                        venda.produto;
+
+                    const total =
+                        Number(venda.quantidade) *
+                        Number(venda.valor_unitario);
+
+
+                    if (
+                        produto.trim() === "" ||
+                        Number.isNaN(total)
+                    ) {
+                        return resultado;
+                    }
+
+
+                    resultado[produto] =
+                        (
+                            resultado[produto] ?? 0
+                        ) + total;
+
+
+                    return resultado;
+                },
+                {} as Record<string, number>
+            );
+
+        const rankingOrdenado =
+            Object.entries(
+                rankingPorProduto
+            ).sort(
+                (
+                    [, quantidadeA],
+                    [, quantidadeB]
+                ): number =>
+                    quantidadeB -
+                    quantidadeA
+            );
+
+        const rankingFormatado:
+            RankingProduto[] =
+            rankingOrdenado.map(
+                (
+                    [produto, quantidade],
+                    index
+                ): RankingProduto => {
+
+                    const faturamento =
+                        faturamentoPorProduto[
+                            produto
+                        ] ?? 0;
+
+
+                    return {
+                        posicao: index + 1,
+                        produto,
+                        quantidade,
+                        faturamento,
+                        faturamentoFormatado:
+                            formatarMoeda(
+                                faturamento
+                            )
+                    };
+                }
+            );
+
+        if (
+            rankingFormatado.length > 0
+        ) {
+
+            const destaque =
+                rankingFormatado[0];
+
+
+            produtoMaisVendido.textContent =
+                destaque.produto;
+
+
+            quantidadeMaisVendida.textContent =
+                `${destaque.quantidade} unidades vendidas`;
+        }
+        
+        tabelaRanking.innerHTML = "";
+
+
+        rankingFormatado.forEach(
+            (item) => {
+
+                const linha =
+                    document.createElement("tr");
+
+
+                const colunaPosicao =
+                    document.createElement("td");
+
+                const colunaProduto =
+                    document.createElement("td");
+
+                const colunaQuantidade =
+                    document.createElement("td");
+
+                const colunaFaturamento =
+                    document.createElement("td");
+
+
+                colunaPosicao.textContent =
+                    String(item.posicao);
+
+
+                colunaProduto.textContent =
+                    item.produto;
+
+
+                colunaQuantidade.textContent =
+                    String(item.quantidade);
+
+
+                colunaFaturamento.textContent =
+                    item.faturamentoFormatado;
+
+
+                linha.appendChild(
+                    colunaPosicao
+                );
+
+                linha.appendChild(
+                    colunaProduto
+                );
+
+                linha.appendChild(
+                    colunaQuantidade
+                );
+
+                linha.appendChild(
+                    colunaFaturamento
+                );
+
+
+                tabelaRanking.appendChild(
+                    linha
+                );
+            }
+        );
+    };
+
+
+const iniciarDashboard =
+    async (): Promise<void> => {
+
+        try {
+
+            const vendas =
+                await carregarVendasDashboard();
+
+            const produtos =
+                await carregarProdutos();
+
+            processarDashboard(vendas);
+
+
+            const totalProdutos =
+                document.getElementById(
+                    "totalProdutos"
+                );
+
+            if (totalProdutos !== null) {
+
+                totalProdutos.textContent =
+                    String(produtos.length);
+            }
+
+
+            await carregarEstoqueCritico();
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao iniciar dashboard:",
+                erro
+            );
+        }
+    };
+
+
+iniciarDashboard();
 
 
 export {};

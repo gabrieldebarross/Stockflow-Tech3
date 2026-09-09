@@ -1,6 +1,6 @@
 <?php
 
-$titulo = "Dashboard - StockFlow";
+$titulo = "Dashboard";
 
 require_once "templates/header.php";
 
@@ -9,7 +9,6 @@ require_once "templates/header.php";
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <div>
-
         <h1 class="page-title mb-1">
             Dashboard
         </h1>
@@ -17,20 +16,23 @@ require_once "templates/header.php";
         <p class="text-muted mb-0">
             Visão geral do estoque e das vendas.
         </p>
-
     </div>
+
+    <a
+        href="vendas.php"
+        class="btn btn-primary"
+    >
+        Nova venda
+    </a>
 
 </div>
 
 
-<div id="mensagem"></div>
+<!-- INDICADORES -->
 
+<div class="row g-4 mb-4">
 
-<!-- Indicadores -->
-
-<div class="row g-4">
-
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-3">
 
         <div class="card h-100">
 
@@ -40,16 +42,12 @@ require_once "templates/header.php";
                     Total de vendas
                 </h6>
 
-                <p
+                <h2
                     id="totalVendas"
-                    class="display-6 fw-bold mb-1"
+                    class="fw-bold"
                 >
                     0
-                </p>
-
-                <small class="text-muted">
-                    Vendas registradas
-                </small>
+                </h2>
 
             </div>
 
@@ -58,7 +56,7 @@ require_once "templates/header.php";
     </div>
 
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-3">
 
         <div class="card h-100">
 
@@ -68,16 +66,12 @@ require_once "templates/header.php";
                     Faturamento
                 </h6>
 
-                <p
-                    id="faturamento"
-                    class="display-6 fw-bold mb-1"
+                <h2
+                    id="faturamentoTotal"
+                    class="fw-bold"
                 >
                     R$ 0,00
-                </p>
-
-                <small class="text-muted">
-                    Faturamento total
-                </small>
+                </h2>
 
             </div>
 
@@ -86,7 +80,7 @@ require_once "templates/header.php";
     </div>
 
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-3">
 
         <div class="card h-100">
 
@@ -96,16 +90,12 @@ require_once "templates/header.php";
                     Produtos
                 </h6>
 
-                <p
+                <h2
                     id="totalProdutos"
-                    class="display-6 fw-bold mb-1"
+                    class="fw-bold"
                 >
                     0
-                </p>
-
-                <small class="text-muted">
-                    Produtos cadastrados
-                </small>
+                </h2>
 
             </div>
 
@@ -114,7 +104,7 @@ require_once "templates/header.php";
     </div>
 
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-3">
 
         <div class="card h-100">
 
@@ -124,16 +114,12 @@ require_once "templates/header.php";
                     Estoque crítico
                 </h6>
 
-                <p
+                <h2
                     id="estoqueCritico"
-                    class="display-6 fw-bold text-danger mb-1"
+                    class="fw-bold text-danger"
                 >
                     0
-                </p>
-
-                <small class="text-muted">
-                    Produtos abaixo do mínimo
-                </small>
+                </h2>
 
             </div>
 
@@ -144,73 +130,46 @@ require_once "templates/header.php";
 </div>
 
 
-<!-- Ranking -->
+<!-- PRODUTO DESTAQUE -->
 
-<div class="card mt-4">
+<div class="card mb-4">
 
     <div class="card-body">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="row align-items-center">
 
-            <div>
+            <div class="col-md-8">
 
-                <h5 class="card-title mb-1">
-                    Produtos mais vendidos
+                <h5 class="card-title">
+                    🏆 Produto mais vendido
                 </h5>
 
-                <p class="text-muted mb-0">
-                    Ranking por quantidade vendida.
+                <p
+                    id="produtoMaisVendido"
+                    class="fs-4 fw-bold mb-1"
+                >
+                    Nenhum dado registrado
+                </p>
+
+                <p
+                    id="quantidadeMaisVendida"
+                    class="text-muted mb-0"
+                >
+                    -
                 </p>
 
             </div>
 
-            <a
-                href="vendas.php"
-                class="btn btn-sm btn-outline-primary"
-            >
-                Ver vendas
-            </a>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
 
-        </div>
+                <a
+                    href="produtos.php"
+                    class="btn btn-outline-primary"
+                >
+                    Ver produtos
+                </a>
 
-
-        <div class="table-responsive">
-
-            <table class="table table-hover mb-0">
-
-                <thead>
-
-                    <tr>
-
-                        <th>#</th>
-
-                        <th>Produto</th>
-
-                        <th>Quantidade vendida</th>
-
-                        <th>Faturamento</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="tabelaRanking">
-
-                    <tr>
-
-                        <td
-                            colspan="4"
-                            class="text-center text-muted"
-                        >
-                            Carregando ranking...
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
+            </div>
 
         </div>
 
@@ -219,115 +178,130 @@ require_once "templates/header.php";
 </div>
 
 
-<!-- Estoque crítico -->
+<div class="row g-4">
 
-<div class="card mt-4">
+    <!-- RANKING -->
 
-    <div class="card-body">
+    <div class="col-lg-7">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="card h-100">
 
-            <div>
+            <div class="card-body">
 
-                <h5 class="card-title mb-1">
+                <h5 class="card-title">
+                    Ranking de produtos
+                </h5>
+
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    Produto
+                                </th>
+
+                                <th>
+                                    Quantidade
+                                </th>
+
+                                <th>
+                                    Faturamento
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="tabelaRanking">
+
+                            <tr>
+
+                                <td
+                                    colspan="4"
+                                    class="text-center text-muted"
+                                >
+                                    Carregando...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ESTOQUE CRÍTICO -->
+
+    <div class="col-lg-5">
+
+        <div class="card h-100">
+
+            <div class="card-body">
+
+                <h5 class="card-title">
                     Estoque crítico
                 </h5>
 
-                <p class="text-muted mb-0">
-                    Produtos que precisam de reposição.
-                </p>
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Produto
+                                </th>
+
+                                <th>
+                                    Estoque
+                                </th>
+
+                                <th>
+                                    Mínimo
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="tabelaEstoqueCritico">
+
+                            <tr>
+
+                                <td
+                                    colspan="3"
+                                    class="text-center text-muted"
+                                >
+                                    Carregando...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             </div>
-
-            <a
-                href="produtos.php"
-                class="btn btn-sm btn-outline-danger"
-            >
-                Ver produtos
-            </a>
-
-        </div>
-
-
-        <div class="table-responsive">
-
-            <table class="table table-hover mb-0">
-
-                <thead>
-
-                    <tr>
-
-                        <th>Produto</th>
-
-                        <th>Categoria</th>
-
-                        <th>Estoque atual</th>
-
-                        <th>Estoque mínimo</th>
-
-                        <th>Status</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="tabelaEstoqueCritico">
-
-                    <tr>
-
-                        <td
-                            colspan="5"
-                            class="text-center text-muted"
-                        >
-                            Carregando estoque...
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- Ações rápidas -->
-
-<div class="card mt-4">
-
-    <div class="card-body">
-
-        <h5 class="card-title">
-            Ações rápidas
-        </h5>
-
-        <div class="d-flex gap-2 flex-wrap">
-
-            <a
-                href="categorias.php"
-                class="btn btn-secondary"
-            >
-                Categorias
-            </a>
-
-            <a
-                href="produtos.php"
-                class="btn btn-primary"
-            >
-                Produtos
-            </a>
-
-            <a
-                href="vendas.php"
-                class="btn btn-success"
-            >
-                Nova venda
-            </a>
 
         </div>
 
@@ -340,7 +314,6 @@ require_once "templates/header.php";
     type="module"
     src="assets/js/dashboard.js"
 ></script>
-
 
 <?php
 

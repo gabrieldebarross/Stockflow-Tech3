@@ -10,6 +10,7 @@ const estoqueMinimo = document.getElementById("estoqueMinimo");
 const busca = document.getElementById("busca");
 const tituloModal = document.getElementById("tituloModal");
 const mensagem = document.getElementById("mensagem");
+
 async function carregarCategorias() {
     try {
         const resposta = await fetch("../api/categorias/listar.php");
